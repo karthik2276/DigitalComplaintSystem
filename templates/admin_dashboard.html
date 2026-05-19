@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Digital Complaint Management System{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title">Analytics Overview</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1rem;">
+        <div id="statusChart" style="height: 350px;"></div>
+        <div id="priorityChart" style="height: 350px;"></div>
+    </div>
+</div>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; padding-bottom: 0.5rem;">
+        <h2 style="margin: 0;">Complaint Management</h2>
+        
+        <form method="GET" action="{{ url_for('main.admin_dashboard') }}" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <input type="text" name="search" class="form-control" placeholder="Search ID or Title..." value="{{ search_query }}" style="width: 200px; padding: 0.4rem;">
+            <select name="status" class="form-control" style="width: auto; padding: 0.4rem;">
+                <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All Statuses</option>
+                <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+                <option value="In Progress" {% if status_filter == 'In Progress' %}selected{% endif %}>In Progress</option>
+                <option value="Resolved" {% if status_filter == 'Resolved' %}selected{% endif %}>Resolved</option>
+                <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+            <button type="submit" class="btn btn-primary" style="padding: 0.4rem 1rem;">Filter</button>
+            <a href="{{ url_for('main.export_csv', status=status_filter, search=search_query) }}" class="btn" style="background-color: var(--success-color); color: white; padding: 0.4rem 1rem;">Export CSV</a>
+        </form>
+    </div>
+    
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tracking ID</th>
+                    <th>User</th>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Date</th>
+                    <th>Current Status</th>
+                    <th>Update Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in complaints.items %}
+                    <tr>
+                        <td><strong>{{ complaint.tracking_id }}</strong></td>
+                        <td>{{ complaint.author.username }}</td>
+                        <td>{{ complaint.title }}</td>
+                        <td><span class="badge badge-{{ complaint.priority }}">{{ complaint.priority }}</span></td>
+                        <td>{{ complaint.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td><span class="badge badge-{{ complaint.status | replace(' ', '-') }}">{{ complaint.status }}</span></td>
+                        <td>
+                            <form method="POST" action="{{ url_for('main.update_complaint', complaint_id=complaint.id) }}" style="display: flex; gap: 0.5rem;">
+                                <select name="status" class="form-control" style="width: 120px; padding: 0.2rem;">
+                                    <option value="Pending" {% if complaint.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                    <option value="In Progress" {% if complaint.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Resolved" {% if complaint.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                                    <option value="Rejected" {% if complaint.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Update</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: #6c757d;">No complaints found for this filter.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if complaints.pages > 1 %}
+        <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.5rem;">
+            {% for page_num in complaints.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if complaints.page == page_num %}
+                        <a class="btn btn-primary" href="{{ url_for('main.admin_dashboard', page=page_num, status=status_filter) }}">{{ page_num }}</a>
+                    {% else %}
+                        <a class="btn" style="border: 1px solid var(--border-color);" href="{{ url_for('main.admin_dashboard', page=page_num, status=status_filter) }}">{{ page_num }}</a>
+                    {% endif %}
+                {% else %}
+                    <span style="padding: 0.5rem;">...</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Recent Activity Logs -->
+<div class="card" style="margin-top: 2rem;">
+    <h2 class="card-title">Recent Admin Activity</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Admin</th>
+                    <th>Action</th>
+                    <th>Complaint ID</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in recent_logs %}
+                    <tr>
+                        <td>{{ log.admin.username }}</td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.complaint.tracking_id }}</td>
+                        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem; color: #6c757d;">No recent activity.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Parse the analytics data passed from Flask
+    const analyticsData = JSON.parse('{{ analytics_data | safe }}');
+    
+    // Status Chart (Pie)
+    const statusTrace = {
+        labels: analyticsData.status.labels,
+        values: analyticsData.status.values,
+        type: 'pie',
+        marker: {
+            colors: ['#f8961e', '#4361ee', '#4cc9f0', '#f72585']
+        },
+        hole: 0.4
+    };
+    const statusLayout = {
+        title: 'Complaints by Status',
+        margin: { t: 40, b: 0, l: 0, r: 0 }
+    };
+    Plotly.newPlot('statusChart', [statusTrace], statusLayout);
+    
+    // Priority Chart (Bar)
+    const priorityTrace = {
+        x: analyticsData.priority.labels,
+        y: analyticsData.priority.values,
+        type: 'bar',
+        marker: {
+            color: ['#6c757d', '#f8961e', '#f72585']
+        }
+    };
+    const priorityLayout = {
+        title: 'Complaints by Priority',
+        xaxis: { title: 'Priority Level' },
+        yaxis: { title: 'Count', tick0: 0, dtick: 1 },
+        margin: { t: 40, b: 40, l: 40, r: 20 }
+    };
+    Plotly.newPlot('priorityChart', [priorityTrace], priorityLayout);
+</script>
+{% endblock %}

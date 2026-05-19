@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome - Digital Complaint Management System{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Digital Complaint Management System</h1>
+    <p>A secure, efficient, and transparent platform to submit, track, and resolve complaints across your organization.</p>
+    {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('main.register') }}" class="btn btn-primary" style="background-color: white; color: var(--primary-color);">Get Started</a>
+        <a href="{{ url_for('main.login') }}" class="btn" style="border: 2px solid white; color: white; margin-left: 1rem;">Login to Account</a>
+    {% endif %}
+    
+    <div style="margin-top: 2rem; max-width: 500px; margin-left: auto; margin-right: auto; background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 10px;">
+        <h3 style="margin-top: 0;">Track Complaint</h3>
+        <form method="GET" action="{{ url_for('main.index') }}" style="display: flex; gap: 0.5rem;">
+            <input type="text" name="tracking_id" class="form-control" placeholder="Enter Tracking ID (e.g. CMP-...)" required>
+            <button type="submit" class="btn" style="background: white; color: var(--primary-color);">Search</button>
+        </form>
+    </div>
+</div>
+
+{% if tracked_complaint %}
+<div class="card" style="margin-top: -2rem; margin-bottom: 3rem; position: relative; z-index: 10; max-width: 600px; margin-left: auto; margin-right: auto;">
+    <h2 class="card-title">Tracking Results</h2>
+    <p><strong>Tracking ID:</strong> {{ tracked_complaint.tracking_id }}</p>
+    <p><strong>Title:</strong> {{ tracked_complaint.title }}</p>
+    <p><strong>Status:</strong> <span class="badge badge-{{ tracked_complaint.status | replace(' ', '-') }}">{{ tracked_complaint.status }}</span></p>
+    <p><strong>Date Submitted:</strong> {{ tracked_complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+</div>
+{% endif %}
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
+    <div class="card" style="text-align: center;">
+        <h3 style="color: var(--primary-color); margin-top: 0;">Submit Complaints</h3>
+        <p>Easily log your complaints with attachments and track them using a unique tracking ID.</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <h3 style="color: var(--primary-color); margin-top: 0;">Real-time Updates</h3>
+        <p>Monitor the status of your complaints and get updates directly on your dashboard.</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <h3 style="color: var(--primary-color); margin-top: 0;">Admin Analytics</h3>
+        <p>Administrators have access to powerful Plotly dashboards to monitor resolution rates.</p>
+    </div>
+</div>
+{% endblock %}

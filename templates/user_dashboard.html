@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard - Digital Complaint Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Left Column: Submission Form -->
+    <div class="dashboard-sidebar">
+        <div class="card">
+            <h3 class="card-title">Submit a New Complaint</h3>
+            <form method="POST" action="{{ url_for('main.user_dashboard') }}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" name="title" class="form-control" required placeholder="Brief title of the issue">
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" class="form-control" required>
+                        {% if categories %}
+                            {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Fallback if no categories are seeded -->
+                            <option value="">No Categories Available</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority" class="form-control" required>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="4" required placeholder="Detailed description of your complaint..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="attachment">Attachment (Optional)</label>
+                    <input type="file" id="attachment" name="attachment" class="form-control">
+                    <small style="color: #6c757d; display: block; margin-top: 0.25rem;">Allowed types: Image, PDF (Max 16MB)</small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Complaint</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Complaint History -->
+    <div class="dashboard-main">
+        <div class="card" style="margin-bottom: 1.5rem; background: var(--primary-color); color: white;">
+            <h3 style="margin-top: 0; margin-bottom: 1rem; color: white; border-bottom: none;">Track Complaint Quickly</h3>
+            <form method="GET" action="{{ url_for('main.index') }}" style="display: flex; gap: 0.5rem;">
+                <input type="text" name="tracking_id" class="form-control" placeholder="Enter Tracking ID..." required style="max-width: 300px;">
+                <button type="submit" class="btn" style="background: white; color: var(--primary-color);">Search</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Your Complaint History</h3>
+            
+            {% if complaints %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tracking ID</th>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Attachment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for complaint in complaints %}
+                                <tr>
+                                    <td><strong>{{ complaint.tracking_id }}</strong></td>
+                                    <td>{{ complaint.title }}</td>
+                                    <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td><span class="badge badge-{{ complaint.priority }}">{{ complaint.priority }}</span></td>
+                                    <td><span class="badge badge-{{ complaint.status | replace(' ', '-') }}">{{ complaint.status }}</span></td>
+                                    <td>
+                                        {% if complaint.attachment %}
+                                            <a href="{{ url_for('static', filename='uploads/' + complaint.attachment) }}" target="_blank" style="color: var(--primary-color);">View File</a>
+                                        {% else %}
+                                            <span style="color: #6c757d;">None</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 2rem; color: #6c757d;">
+                    <p>You have not submitted any complaints yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
