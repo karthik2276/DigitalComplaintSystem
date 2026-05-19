@@ -68,7 +68,7 @@ def register():
         flash('Your account has been created! You are now able to log in', 'success')
         return redirect(url_for('main.login'))
         
-    return render_template('register.html')
+    return render_template('auth/register.html')
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -87,7 +87,7 @@ def login():
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
             
-    return render_template('login.html')
+    return render_template('auth/login.html')
 
 @main_bp.route('/logout')
 def logout():
@@ -143,7 +143,7 @@ def user_dashboard():
         
     user_complaints = Complaint.query.filter_by(user_id=current_user.id).order_by(Complaint.created_at.desc()).all()
     
-    return render_template('user_dashboard.html', complaints=user_complaints, categories=categories)
+    return render_template('user/user_dashboard.html', complaints=user_complaints, categories=categories)
 
 @main_bp.route('/admin_dashboard')
 @login_required
@@ -188,7 +188,7 @@ def admin_dashboard():
         'priority': {'labels': priority_labels, 'values': priority_values}
     }
     
-    return render_template('admin_dashboard.html', 
+    return render_template('admin/admin_dashboard.html', 
                            complaints=complaints, 
                            status_filter=status_filter,
                            search_query=search_query,

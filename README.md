@@ -28,6 +28,31 @@ A complete, full-stack web application designed for organizations, colleges, and
 - **Authentication**: Flask-Login, Flask-Bcrypt
 - **Analytics**: Plotly.js
 
+## 📁 Project Structure
+```
+DigitalComplaintSystem/
+├── app.py
+├── config.py
+├── models.py
+├── routes.py
+├── requirements.txt
+├── .env.example
+├── seed_data.py
+├── README.md
+├── .gitignore
+├── database/
+├── static/
+│   ├── css/
+│   ├── uploads/
+│
+├── templates/
+│   ├── admin/
+│   ├── auth/
+│   ├── user/
+│   ├── base.html
+│   └── index.html
+```
+
 ## ⚙️ Installation & Setup
 
 1. **Clone the repository** (or navigate to the project directory):
