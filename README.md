@@ -114,15 +114,18 @@ http://127.0.0.1:5000
 
 ## Home Page
 
-(Add Screenshot Here)
+(Add Sc<img width="1920" height="1080" alt="home" src="https://github.com/user-attachments/assets/8f840a24-d044-4478-9e4a-bb46e7b2e06b" />
+reenshot Here)
 
 ## User Dashboard
 
-(Add Screenshot Here)
+(Add S<img width="1920" height="1080" alt="user_dashboard" src="https://github.com/user-attachments/assets/60f5ea47-6e2b-465f-b811-3f40faa91f5e" />
+creenshot Here)
 
 ## Admin Dashboard
 
-(Add Screenshot Here)
+(Add S<img width="1920" height="1080" alt="admin_dashboard" src="https://github.com/user-attachments/assets/fe8e1cc2-75ba-473b-9637-eb2afa11102e" />
+creenshot Here)
 
 ---
 
