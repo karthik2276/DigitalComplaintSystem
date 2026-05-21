@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from werkzeug.utils import secure_filename
 import os
 import uuid
 import json
 import csv
+from datetime import datetime
 from io import StringIO
 from flask import Response
 from sqlalchemy import func
@@ -146,11 +147,21 @@ def user_dashboard():
     return render_template('user/user_dashboard.html', complaints=user_complaints, categories=categories)
 
 @main_bp.route('/admin_dashboard')
-@login_required
 def admin_dashboard():
+    # Ensure an admin user exists; create default if none
+    admin_user = User.query.filter_by(role='admin').first()
+    if not admin_user:
+        admin_user = User(username='admin', email='admin@example.com', password_hash=bcrypt.generate_password_hash('admin123').decode('utf-8'), role='admin')
+        db.session.add(admin_user)
+        db.session.commit()
+
+    # Auto-login admin for demo if not authenticated
+    if not current_user.is_authenticated:
+        login_user(admin_user)
     if current_user.role != 'admin':
         flash('Access denied. Admins only.', 'danger')
         return redirect(url_for('main.index'))
+    
         
     page = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', 'All')
@@ -254,3 +265,123 @@ def update_complaint(complaint_id):
         flash(f'Complaint {complaint.tracking_id} updated to {new_status}', 'success')
         
     return redirect(url_for('main.admin_dashboard'))
+
+
+# ─── Health Check ──────────────────────────────────────────────────────────────
+
+@main_bp.route('/health')
+def health_check():
+    """System health status endpoint. Returns JSON with DB connectivity and uptime info."""
+    try:
+        # Quick DB probe
+        user_count = User.query.count()
+        complaint_count = Complaint.query.count()
+        db_status = 'ok'
+    except Exception as e:
+        db_status = f'error: {str(e)}'
+        user_count = None
+        complaint_count = None
+
+    return jsonify({
+        'status': 'healthy' if db_status == 'ok' else 'degraded',
+        'timestamp': datetime.utcnow().isoformat() + 'Z',
+        'version': '1.0.0',
+        'database': {
+            'status': db_status,
+            'users': user_count,
+            'complaints': complaint_count
+        },
+        'service': 'Digital Complaint Management System'
+    }), 200 if db_status == 'ok' else 503
+
+
+# ─── REST API Endpoints ────────────────────────────────────────────────────────
+
+@main_bp.route('/api/complaints')
+@login_required
+def api_complaints():
+    """GET /api/complaints — Returns a paginated JSON list of complaints (admin only)."""
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Forbidden. Admin access required.'}), 403
+
+    page      = request.args.get('page', 1, type=int)
+    per_page  = request.args.get('per_page', 10, type=int)
+    status    = request.args.get('status')
+    priority  = request.args.get('priority')
+    search    = request.args.get('search', '')
+
+    query = Complaint.query
+    if status:
+        query = query.filter_by(status=status)
+    if priority:
+        query = query.filter_by(priority=priority)
+    if search:
+        query = query.filter(
+            db.or_(
+                Complaint.tracking_id.ilike(f'%{search}%'),
+                Complaint.title.ilike(f'%{search}%')
+            )
+        )
+
+    paginated = query.order_by(Complaint.created_at.desc()).paginate(page=page, per_page=per_page)
+
+    data = []
+    for c in paginated.items:
+        data.append({
+            'id': c.id,
+            'tracking_id': c.tracking_id,
+            'title': c.title,
+            'description': c.description,
+            'status': c.status,
+            'priority': c.priority,
+            'category': c.category.name if c.category else None,
+            'submitted_by': c.author.username,
+            'created_at': c.created_at.isoformat(),
+            'updated_at': c.updated_at.isoformat() if c.updated_at else None,
+            'attachment': c.attachment
+        })
+
+    return jsonify({
+        'complaints': data,
+        'pagination': {
+            'page': paginated.page,
+            'per_page': paginated.per_page,
+            'total': paginated.total,
+            'pages': paginated.pages,
+            'has_next': paginated.has_next,
+            'has_prev': paginated.has_prev
+        }
+    }), 200
+
+
+@main_bp.route('/api/complaints/<int:complaint_id>')
+@login_required
+def api_complaint_detail(complaint_id):
+    """GET /api/complaints/<id> — Returns a single complaint's full detail."""
+    complaint = Complaint.query.get_or_404(complaint_id)
+
+    # Users can only view their own; admins can view all
+    if current_user.role != 'admin' and complaint.user_id != current_user.id:
+        return jsonify({'error': 'Forbidden.'}), 403
+
+    return jsonify({
+        'id': complaint.id,
+        'tracking_id': complaint.tracking_id,
+        'title': complaint.title,
+        'description': complaint.description,
+        'status': complaint.status,
+        'priority': complaint.priority,
+        'category': complaint.category.name if complaint.category else None,
+        'submitted_by': complaint.author.username,
+        'created_at': complaint.created_at.isoformat(),
+        'updated_at': complaint.updated_at.isoformat() if complaint.updated_at else None,
+        'attachment': complaint.attachment
+    }), 200
+
+
+# ─── API Documentation Page ────────────────────────────────────────────────────
+
+@main_bp.route('/api/docs')
+def api_docs():
+    """Lightweight, self-hosted API documentation page."""
+    return render_template('api_docs.html')

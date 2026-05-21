@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 – Server Error | DCMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .error-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 2rem; background: var(--bg-light, #f8fafc); }
+        .error-code { font-size: 9rem; font-weight: 800; line-height: 1; background: linear-gradient(135deg, #f56565 0%, #c53030 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: pulse 2.5s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.85;transform:scale(1.03);} }
+        .error-icon { font-size: 4rem; margin-bottom: .5rem; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+        .error-title { font-size: 1.8rem; font-weight: 700; color: var(--text-dark, #1e293b); margin: 1rem 0 .5rem; }
+        .error-subtitle { color: var(--text-muted, #64748b); font-size: 1.05rem; max-width: 420px; margin-bottom: 2rem; line-height: 1.6; }
+        .error-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+        .btn-home { padding: .75rem 2rem; border-radius: 8px; font-weight: 600; font-size: .95rem; text-decoration: none; transition: all .2s ease; background: linear-gradient(135deg, #f56565, #c53030); color: #fff; border: none; cursor: pointer; }
+        .btn-home:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,101,101,0.4); }
+        .btn-back { padding: .75rem 2rem; border-radius: 8px; font-weight: 600; font-size: .95rem; text-decoration: none; transition: all .2s ease; background: transparent; color: var(--text-dark, #1e293b); border: 2px solid var(--border-color, #e2e8f0); }
+        .btn-back:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    </style>
+</head>
+<body>
+    <div class="error-page">
+        <div class="error-icon">⚙️</div>
+        <div class="error-code">500</div>
+        <h1 class="error-title">Server Error</h1>
+        <p class="error-subtitle">
+            Oops! Something went wrong on our end.<br>
+            Our team has been notified. Please try again later.
+        </p>
+        <div class="error-actions">
+            <a href="{{ url_for('main.index') }}" class="btn-home">🏠 Go Home</a>
+            <a href="javascript:location.reload()" class="btn-back">↻ Reload</a>
+        </div>
+    </div>
+    <script>
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+</body>
+</html>

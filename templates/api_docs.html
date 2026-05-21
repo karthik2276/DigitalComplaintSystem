@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% block title %}API Documentation – DCMS{% endblock %}
+
+{% block head %}
+<style>
+.api-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    color: #fff;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+.api-hero h1 { font-size: 2rem; font-weight: 800; margin: 0 0 0.4rem; }
+.api-hero p  { opacity: 0.9; font-size: 1rem; margin: 0; }
+.api-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 0.2rem 0.8rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+}
+.api-base {
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-family: monospace;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-top: 0.8rem;
+}
+/* Endpoint cards */
+.section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted, #64748b);
+    margin: 2rem 0 0.75rem;
+}
+.endpoint-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+.endpoint-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+.endpoint-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    user-select: none;
+}
+.method {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    min-width: 48px;
+    text-align: center;
+    letter-spacing: 0.05em;
+}
+.method.get  { background: #d1fae5; color: #065f46; }
+.method.post { background: #dbeafe; color: #1e40af; }
+.endpoint-path {
+    font-family: monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dark, #1e293b);
+    flex: 1;
+}
+.endpoint-summary {
+    font-size: 0.85rem;
+    color: var(--text-muted, #64748b);
+}
+.chevron {
+    transition: transform 0.2s;
+    font-size: 0.8rem;
+    color: var(--text-muted, #94a3b8);
+}
+.chevron.open { transform: rotate(180deg); }
+.endpoint-body {
+    display: none;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    padding: 1.25rem;
+    background: var(--bg-light, #f8fafc);
+}
+.endpoint-body.open { display: block; }
+.param-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.75rem; }
+.param-table th {
+    text-align: left;
+    padding: 0.4rem 0.75rem;
+    background: var(--border-color, #e2e8f0);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.param-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border-color, #e2e8f0); }
+.param-table tr:last-child td { border-bottom: none; }
+.tag-required {
+    font-size: 0.68rem;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-weight: 600;
+}
+.tag-optional {
+    font-size: 0.68rem;
+    background: #f1f5f9;
+    color: #64748b;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+}
+.tag-auth {
+    font-size: 0.68rem;
+    background: #ede9fe;
+    color: #5b21b6;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-weight: 600;
+}
+.code-block {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: monospace;
+    font-size: 0.82rem;
+    overflow-x: auto;
+    margin-top: 0.75rem;
+    line-height: 1.6;
+}
+.code-block .key   { color: #93c5fd; }
+.code-block .str   { color: #86efac; }
+.code-block .num   { color: #fcd34d; }
+.code-block .bool  { color: #fb923c; }
+.try-btn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.45rem 1rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+.try-btn:hover { opacity: 0.85; }
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.info-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+}
+.info-card .label { font-size: 0.75rem; color: var(--text-muted,#64748b); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.25rem; }
+.info-card .value { font-weight: 700; font-size: 0.95rem; color: var(--text-dark,#1e293b); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="api-hero">
+    <div class="api-badge">v1.0.0 · REST API</div>
+    <h1>📡 DCMS API Documentation</h1>
+    <p>Lightweight, self-hosted reference for the Digital Complaint Management System API</p>
+    <div class="api-base">Base URL: <strong>http://localhost:5000</strong></div>
+</div>
+
+<!-- Info cards -->
+<div class="info-grid">
+    <div class="info-card">
+        <div class="label">Format</div>
+        <div class="value">JSON</div>
+    </div>
+    <div class="info-card">
+        <div class="label">Authentication</div>
+        <div class="value">Session-based</div>
+    </div>
+    <div class="info-card">
+        <div class="label">Admin Endpoints</div>
+        <div class="value">Role-protected</div>
+    </div>
+    <div class="info-card">
+        <div class="label">Status</div>
+        <div class="value" style="color:#10b981;">● Live</div>
+    </div>
+</div>
+
+<!-- ── System ───────────────────────────────────────────────────────────────── -->
+<div class="section-label">System</div>
+
+<div class="endpoint-card">
+    <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method get">GET</span>
+        <span class="endpoint-path">/health</span>
+        <span class="endpoint-summary">System health &amp; database status check</span>
+        <span class="chevron">▼</span>
+    </div>
+    <div class="endpoint-body">
+        <p style="margin:0 0 0.5rem;font-size:0.88rem;color:var(--text-muted,#64748b);">
+            Returns live status of the application and database. No authentication required.
+            Ideal for uptime monitors and deployment health checks.
+        </p>
+        <strong style="font-size:0.8rem;">Response (200 OK)</strong>
+        <div class="code-block">
+{<br>
+&nbsp;&nbsp;<span class="key">"status"</span>: <span class="str">"healthy"</span>,<br>
+&nbsp;&nbsp;<span class="key">"timestamp"</span>: <span class="str">"2025-01-01T12:00:00Z"</span>,<br>
+&nbsp;&nbsp;<span class="key">"version"</span>: <span class="str">"1.0.0"</span>,<br>
+&nbsp;&nbsp;<span class="key">"service"</span>: <span class="str">"Digital Complaint Management System"</span>,<br>
+&nbsp;&nbsp;<span class="key">"database"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"status"</span>: <span class="str">"ok"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"users"</span>: <span class="num">12</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"complaints"</span>: <span class="num">48</span><br>
+&nbsp;&nbsp;}<br>
+}
+        </div>
+        <a href="/health" target="_blank" class="try-btn">▶ Try it live</a>
+    </div>
+</div>
+
+<!-- ── Complaints API ───────────────────────────────────────────────────────── -->
+<div class="section-label">Complaints</div>
+
+<div class="endpoint-card">
+    <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method get">GET</span>
+        <span class="endpoint-path">/api/complaints</span>
+        <span class="endpoint-summary">List all complaints (paginated) <span class="tag-auth">Admin</span></span>
+        <span class="chevron">▼</span>
+    </div>
+    <div class="endpoint-body">
+        <p style="margin:0 0 0.75rem;font-size:0.88rem;color:var(--text-muted,#64748b);">
+            Returns a paginated, filterable list of all complaints. Requires admin login.
+        </p>
+        <strong style="font-size:0.8rem;">Query Parameters</strong>
+        <table class="param-table">
+            <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td>page</td><td>integer</td><td>1</td><td>Page number <span class="tag-optional">optional</span></td></tr>
+                <tr><td>per_page</td><td>integer</td><td>10</td><td>Results per page <span class="tag-optional">optional</span></td></tr>
+                <tr><td>status</td><td>string</td><td>—</td><td>Filter by status: Pending, In Progress, Resolved, Rejected <span class="tag-optional">optional</span></td></tr>
+                <tr><td>priority</td><td>string</td><td>—</td><td>Filter by priority: Low, Medium, High <span class="tag-optional">optional</span></td></tr>
+                <tr><td>search</td><td>string</td><td>—</td><td>Search by tracking ID or title <span class="tag-optional">optional</span></td></tr>
+            </tbody>
+        </table>
+        <strong style="font-size:0.8rem;display:block;margin-top:1rem;">Response (200 OK)</strong>
+        <div class="code-block">
+{<br>
+&nbsp;&nbsp;<span class="key">"complaints"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"id"</span>: <span class="num">1</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"tracking_id"</span>: <span class="str">"CMP-A1B2C3D4"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"title"</span>: <span class="str">"Issue with billing"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"status"</span>: <span class="str">"Pending"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"priority"</span>: <span class="str">"High"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"category"</span>: <span class="str">"Billing"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"submitted_by"</span>: <span class="str">"john_doe"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"created_at"</span>: <span class="str">"2025-01-01T10:30:00"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;<span class="key">"pagination"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"page"</span>: <span class="num">1</span>, <span class="key">"per_page"</span>: <span class="num">10</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"total"</span>: <span class="num">48</span>, <span class="key">"pages"</span>: <span class="num">5</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"has_next"</span>: <span class="bool">true</span>, <span class="key">"has_prev"</span>: <span class="bool">false</span><br>
+&nbsp;&nbsp;}<br>
+}
+        </div>
+        <a href="/api/complaints" target="_blank" class="try-btn">▶ Try it live</a>
+    </div>
+</div>
+
+<div class="endpoint-card">
+    <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method get">GET</span>
+        <span class="endpoint-path">/api/complaints/&lt;id&gt;</span>
+        <span class="endpoint-summary">Get single complaint detail <span class="tag-auth">Auth required</span></span>
+        <span class="chevron">▼</span>
+    </div>
+    <div class="endpoint-body">
+        <p style="margin:0 0 0.75rem;font-size:0.88rem;color:var(--text-muted,#64748b);">
+            Returns full detail of a single complaint. Users can only view their own complaints; admins can view any.
+        </p>
+        <strong style="font-size:0.8rem;">Path Parameters</strong>
+        <table class="param-table">
+            <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td>id</td><td>integer</td><td>Complaint database ID <span class="tag-required">required</span></td></tr>
+            </tbody>
+        </table>
+        <strong style="font-size:0.8rem;display:block;margin-top:1rem;">Response (200 OK)</strong>
+        <div class="code-block">
+{<br>
+&nbsp;&nbsp;<span class="key">"id"</span>: <span class="num">1</span>,<br>
+&nbsp;&nbsp;<span class="key">"tracking_id"</span>: <span class="str">"CMP-A1B2C3D4"</span>,<br>
+&nbsp;&nbsp;<span class="key">"title"</span>: <span class="str">"Issue with billing"</span>,<br>
+&nbsp;&nbsp;<span class="key">"description"</span>: <span class="str">"Full description text..."</span>,<br>
+&nbsp;&nbsp;<span class="key">"status"</span>: <span class="str">"Pending"</span>,<br>
+&nbsp;&nbsp;<span class="key">"priority"</span>: <span class="str">"High"</span>,<br>
+&nbsp;&nbsp;<span class="key">"category"</span>: <span class="str">"Billing"</span>,<br>
+&nbsp;&nbsp;<span class="key">"submitted_by"</span>: <span class="str">"john_doe"</span>,<br>
+&nbsp;&nbsp;<span class="key">"created_at"</span>: <span class="str">"2025-01-01T10:30:00"</span>,<br>
+&nbsp;&nbsp;<span class="key">"updated_at"</span>: <span class="str">"2025-01-02T08:00:00"</span>,<br>
+&nbsp;&nbsp;<span class="key">"attachment"</span>: <span class="str">null</span><br>
+}
+        </div>
+        <strong style="font-size:0.8rem;display:block;margin-top:1rem;">Error Responses</strong>
+        <table class="param-table">
+            <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+            <tbody>
+                <tr><td>403</td><td>Forbidden — not your complaint and not admin</td></tr>
+                <tr><td>404</td><td>Complaint not found</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggle(header) {
+    const body    = header.nextElementSibling;
+    const chevron = header.querySelector('.chevron');
+    body.classList.toggle('open');
+    chevron.classList.toggle('open');
+}
+</script>
+{% endblock %}
